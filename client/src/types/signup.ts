@@ -8,10 +8,25 @@ export interface IVendorData {
 }
 
 export interface SignupFormData {
-    email: string;
-    password: string;
-    confirmPassword: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
+  name:string
+  email: string
+  phoneNumber: string
+  password: string
+  confirmPassword: string
+  role: "client"
+}
+
+export interface OtpFormData {
+  email: string
+  otp: string
+}
+
+export interface VerifyOtpResponse {
+  success: boolean
+  message: string
+}
+
+export interface SignupResponse {
+  success: boolean
+  message: string
 }

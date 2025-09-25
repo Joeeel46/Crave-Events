@@ -2,6 +2,9 @@ import * as React from "react";
 import { useState } from "react";
 import { Eye, EyeOff, Calendar } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useClientLoginMutation } from "@/hooks/clientCustomHooks";
+import type { ILoginData } from "@/types/User";
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormData {
     email: string;
@@ -23,24 +26,37 @@ const Login = () => {
     });
     const [errors, setErrors] = useState<FormErrors>({});
 
+    const verifyLogin = useClientLoginMutation()
+
+    const navigate = useNavigate()
+
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
+        // Email validation
         if (!formData.email) {
             newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "Please enter a valid email address";
+        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
+            newErrors.email = "Invalid email format";
         }
 
+        // Password validation
         if (!formData.password) {
             newErrors.password = "Password is required";
-        } else if (formData.password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
+        } else if (formData.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters long";
+        } else if (!/[A-Z]/.test(formData.password)) {
+            newErrors.password = "Password must contain at least one uppercase letter";
+        } else if (!/[0-9]/.test(formData.password)) {
+            newErrors.password = "Password must contain at least one digit";
+        } else if (!/[@$!%*?&]/.test(formData.password)) {
+            newErrors.password = "Password must contain at least one special character";
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
 
     const handleInputChange = (field: keyof LoginFormData) => (
         e: React.ChangeEvent<HTMLInputElement>
@@ -56,7 +72,16 @@ const Login = () => {
         if (!validateForm()) return;
 
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const payload :ILoginData ={
+            email:formData.email,
+            password:formData.password,
+            role:'client'
+        }
+        const response = await verifyLogin.mutateAsync(payload)
+        console.log(response)
+        if(response?.status === 200){
+            navigate('/')
+        }
         setIsLoading(false);
 
         console.log("Login submitted:", formData);

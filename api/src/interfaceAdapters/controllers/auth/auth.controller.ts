@@ -51,6 +51,7 @@ export class AuthController implements IAuthController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
+      console.log('body',req.body)
       const { role } = req.body as { role: keyof typeof signupSchemas }
       const schema = signupSchemas[role];
       if (!schema) {
@@ -80,14 +81,14 @@ export class AuthController implements IAuthController {
     console.log(email)
     try {
       const userExists = await this._userExistenceService.emailExists(email);
-
+      console.log(userExists);
       if (userExists) {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           message: ERROR_MESSAGES.EMAIL_EXISTS,
         });
         return;
       }
-
+      console.log("Hello Email")
       await this._generateOtpUseCase.execute(email);
 
       res.status(HTTP_STATUS.CREATED).json({

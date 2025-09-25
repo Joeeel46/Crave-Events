@@ -1,8 +1,18 @@
 import { useMutation } from '@tanstack/react-query';
-import { clientCreateAccount, clientForgotPassword, clientGoogleLogin, clientLogin, clientResendOtp, clientSignup, logoutClient } from '@/services/client/clientService';
+import { clientCreateAccount, clientForgotPassword, clientGoogleLogin, clientLogin, clientVerifyOtp, clientSignup, logoutClient } from '@/services/client/clientService';
 import type { ILoginData } from '@/types/User';
+import type { OtpFormData } from '@/types/signup';
 
 import type { SignupFormData } from "@/types/signup";
+
+export interface CreateAccountPayload {
+  name: string
+  email: string
+  phone: string
+  password: string
+  role: "client"
+}
+
 
 type loginData = {
   credential: string
@@ -10,25 +20,30 @@ type loginData = {
   role : string
 }
 
-
-
 export const useClientSignupMutation = () =>{
   return useMutation({
-    mutationFn: (values: SignupFormData) => clientSignup(values),
+    mutationFn: (value: string) => clientSignup(value),
+  })
+}
+
+export const useVerifyOtpClientMutation = () => {
+  return useMutation({
+    mutationFn: (data: OtpFormData) => clientVerifyOtp(data),
   })
 }
 
 export const useCreateAccountMutation = () => {
   return useMutation({
-      mutationFn: ({ formdata, otpString }: { formdata: SignupFormData; otpString: string }) => clientCreateAccount({ formdata, otpString })
+    mutationFn: (payload: CreateAccountPayload) => clientCreateAccount(payload),
   })
 }
 
-// export const useClientLoginMutation = () =>{
-//    return useMutation({
-//      mutationFn: (user:ILoginData) => clientLogin(user)
-//    })
-// }
+
+export const useClientLoginMutation = () =>{
+   return useMutation({
+     mutationFn: (user:ILoginData) => clientLogin(user)
+   })
+}
 
 // export const useClientGoogleLoginMutation = () =>{
 //   return useMutation({
