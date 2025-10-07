@@ -27,12 +27,11 @@ export class ClientRegisterStrategy implements IRegisterStrategy {
 
   async register(user: UserDTO): Promise<IClientEntity | void> {
     const { role, email, password } = user as UserDTO;
-
     const isEmailExisting = await this._userExistenceService.emailExists(email);
+    
     if (isEmailExisting) {
       throw new CustomError(ERROR_MESSAGES.EMAIL_EXISTS, HTTP_STATUS.CONFLICT);
     }
-
     const hashedPassword = password
       ? await this._passwordBcrypt.hash(password)
       : null;

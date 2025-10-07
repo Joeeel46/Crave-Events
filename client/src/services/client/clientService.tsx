@@ -4,7 +4,7 @@ import type { IClient } from "@/types/User"
 import type { ILoginData } from "@/types/User"
 import type { IAxiosResponse } from "@/types/response"
 import { CLIENT_ROUTES } from "@/constants/client.route";
-import type { OtpFormData,SignupFormData } from "@/types/signup"
+import type { OtpFormData } from "@/types/signup"
 import type { VerifyOtpResponse } from "@/types/signup"
 import type { CreateAccountPayload } from "@/hooks/clientCustomHooks"
 import type { SignupResponse } from "@/types/signup"

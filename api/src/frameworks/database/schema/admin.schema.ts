@@ -36,6 +36,4 @@ export const adminSchema = new Schema<IAdminModel>({
     type: Boolean, 
     default: false 
   }, 
-}, {
-  timestamps: true
 });

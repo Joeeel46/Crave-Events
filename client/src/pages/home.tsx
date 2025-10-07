@@ -1,14 +1,35 @@
-import { Link } from "react-router-dom";
-import { Calendar, Sparkles, Users, Heart, Camera, Music } from "lucide-react";
-import { AuthButton } from "../../components/auth/AuthButton"; 
+import { Link, useNavigate } from "react-router-dom";
+import { Calendar, Sparkles, Users, Heart, Camera, Music, LogOut, User } from "lucide-react";
+import { AuthButton } from "../components/auth/AuthButton";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { clearClient } from "@/store/slice/client.slice";
+import { useLogoutClient } from "@/hooks/clientCustomHooks";
 
 const Index = () => {
+  const { client, isAuthenticated } = useAppSelector((state) => state.client);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const { mutate: logout, isPending } = useLogoutClient();
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        dispatch(clearClient());
+        navigate("/");
+      },
+      onError: (error) => {
+        console.error("Logout failed:", error);
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-20 left-10 w-40 h-40 bg-gradient-to-br from-pink-200/50 to-purple-200/50 rounded-full blur-3xl" />
       <div className="absolute bottom-32 right-10 w-56 h-56 bg-gradient-to-br from-purple-200/50 to-pink-200/50 rounded-full blur-3xl" />
-      
+
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex items-center justify-between relative z-10">
         <div className="flex items-center space-x-3">
@@ -20,9 +41,33 @@ const Index = () => {
             <p className="text-xs text-gray-500 -mt-1">Celebrate every moment</p>
           </div>
         </div>
-        <Link to="/userLogin">
-          <AuthButton variant="outline">Sign In</AuthButton>
-        </Link>
+
+        {/* Conditional Auth Display */}
+        {isAuthenticated && client ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-pink-200 shadow-sm">
+              <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-gray-900">
+                {client.name || client.email.split('@')[0]}
+              </span>
+            </div>
+            <AuthButton
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isPending}
+              className="border-red-300 text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4" />
+              {isPending ? "Logging out..." : "Logout"}
+            </AuthButton>
+          </div>
+        ) : (
+          <Link to="/userLogin">
+            <AuthButton variant="outline">Sign In</AuthButton>
+          </Link>
+        )}
       </header>
 
       {/* Hero Section */}
@@ -32,7 +77,7 @@ const Index = () => {
             <Sparkles className="w-4 h-4 text-pink-600" />
             <span className="text-sm font-medium text-pink-700">Where Dreams Become Reality</span>
           </div>
-          
+
           <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
             Create{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500">
@@ -41,17 +86,26 @@ const Index = () => {
             {" "}Events
           </h1>
           <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            From intimate celebrations to grand occasions, we bring your vision to life with 
+            From intimate celebrations to grand occasions, we bring your vision to life with
             creativity, elegance, and attention to every detail. Let us make your special moments extraordinary.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
-            <Link to="/auth">
-              <AuthButton size="lg" className="w-full sm:w-auto group bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-none">
-                <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                Start Planning Today
-              </AuthButton>
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/dashboard">
+                <AuthButton size="lg" className="w-full sm:w-auto group bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-none">
+                  <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  Go to Dashboard
+                </AuthButton>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <AuthButton size="lg" className="w-full sm:w-auto group bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-none">
+                  <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  Start Planning Today
+                </AuthButton>
+              </Link>
+            )}
             <AuthButton variant="outline" size="lg" className="w-full sm:w-auto border-pink-300 text-pink-700 hover:bg-pink-50">
               <Camera className="w-5 h-5" />
               View Our Gallery

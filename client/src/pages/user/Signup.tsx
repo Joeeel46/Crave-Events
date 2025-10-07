@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Calendar } from "lucide-react";
 import { useClientSignupMutation } from "@/hooks/clientCustomHooks";
-import OTPVerificationModal from "./OTPVerificationModal";
+import OTPVerificationModal from "../OTPVerificationModal";
 import { useCreateAccountMutation } from "@/hooks/clientCustomHooks";
 import { useVerifyOtpClientMutation } from "@/hooks/clientCustomHooks"
+import { useResendOtpClientMutaion } from "@/hooks/clientCustomHooks";
 import type { CreateAccountPayload } from "@/hooks/clientCustomHooks";
-import toast from "react-hot-toast";
+import { CheckCircle2, AlertCircle  } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 
 
@@ -26,7 +29,7 @@ const Signup: React.FC = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showOTPModal, setShowOTPModal] = useState(false);
-
+    const [email, setEmail] = useState<string>("");
     const [formData, setFormData] = useState<SignupFormData>({
         email: "",
         password: "",
@@ -38,69 +41,45 @@ const Signup: React.FC = () => {
 
     const [errors, setErrors] = useState<FormErrors>({});
     const sendOtp = useClientSignupMutation();
-    const verifyOtp = useVerifyOtpClientMutation()
+    const verifyOtp = useVerifyOtpClientMutation();
+    const resendOtp = useResendOtpClientMutaion()
     const createAccount = useCreateAccountMutation();
     const navigate = useNavigate()
-    const validateForm = (): boolean => {
-        const newErrors: FormErrors = {};
+    const { toast } = useToast();
+    const formSchema = z
+        .object({
+            firstName: z
+                .string()
+                .min(2, "First name must be at least 2 characters long")
+                .regex(/^[a-zA-Z\s]+$/, "First name must contain only letters and spaces"),
 
-        // First Name Validation
-        if (!formData.firstName) {
-            newErrors.firstName = "First name is required";
-        } else if (formData.firstName.length < 2) {
-            newErrors.firstName = "First name must be at least 2 characters long";
-        } else if (!/^[a-zA-Z\s]+$/.test(formData.firstName)) {
-            newErrors.firstName = "First name must contain only letters and spaces";
-        }
+            lastName: z
+                .string()
+                .min(2, "Last name must be at least 2 characters long")
+                .regex(/^[a-zA-Z\s]+$/, "Last name must contain only letters and spaces"),
 
-        // Last Name Validation
-        if (!formData.lastName) {
-            newErrors.lastName = "Last name is required";
-        } else if (formData.lastName.length < 2) {
-            newErrors.lastName = "Last name must be at least 2 characters long";
-        } else if (!/^[a-zA-Z\s]+$/.test(formData.lastName)) {
-            newErrors.lastName = "Last name must contain only letters and spaces";
-        }
+            email: z.string().email("Invalid email format"),
 
-        // Email Validation
-        if (!formData.email) {
-            newErrors.email = "Email is required";
-        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
-            newErrors.email = "Invalid email format";
-        }
+            phoneNumber: z
+                .string()
+                .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
 
-        // Phone Number Validation
-        if (!formData.phoneNumber) {
-            newErrors.phoneNumber = "Phone number is required";
-        } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
-            newErrors.phoneNumber = "Phone number must be exactly 10 digits";
-        }
+            password: z
+                .string()
+                .min(8, "Password must be at least 8 characters long")
+                .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+                .regex(/[0-9]/, "Password must contain at least one digit")
+                .regex(
+                    /[@$!%*?&]/,
+                    "Password must contain at least one special character (@$!%*?&)"
+                ),
 
-        // Password Validation
-        if (!formData.password) {
-            newErrors.password = "Password is required";
-        } else {
-            if (formData.password.length < 8) {
-                newErrors.password = "Password must be at least 8 characters long";
-            } else if (!/[A-Z]/.test(formData.password)) {
-                newErrors.password = "Password must contain at least one uppercase letter";
-            } else if (!/[0-9]/.test(formData.password)) {
-                newErrors.password = "Password must contain at least one digit";
-            } else if (!/[@$!%*?&]/.test(formData.password)) {
-                newErrors.password = "Password must contain at least one special character (@$!%*?&)";
-            }
-        }
-
-        // Confirm Password Validation
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = "Please confirm your password";
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = "Passwords do not match";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+            confirmPassword: z.string(),
+        })
+        .refine((data) => data.password === data.confirmPassword, {
+            path: ["confirmPassword"],
+            message: "Passwords do not match",
+        });
 
 
     const handleInputChange =
@@ -112,13 +91,28 @@ const Signup: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateForm()) return;
+
+        setErrors({}); // clear old errors
+
+        // ✅ Validate with Zod
+        const result = formSchema.safeParse(formData);
+        if (!result.success) {
+            const fieldErrors: Record<string, string> = {};
+            result.error.issues.forEach((issue) => {
+                const fieldName = issue.path[0];
+                if (typeof fieldName === "string") {
+                    fieldErrors[fieldName] = issue.message;
+                }
+            });
+            setErrors(fieldErrors);
+            return; // stop execution if validation fails
+        }
 
         setIsLoading(true);
-        setErrors({});
-
+        setEmail(formData.email)
         try {
             const response = await sendOtp.mutateAsync(formData.email);
+
             if (response?.message === "OTP sent") {
                 setShowOTPModal(true);
             } else if (response?.message === "Email already registered") {
@@ -163,26 +157,69 @@ const Signup: React.FC = () => {
                 console.log("Account created:", accountResponse);
 
                 // Show toast instead of alert
-                toast.success("Account created successfully!");
+                toast({
+                    title: "Account created successfully!",
+                    description: "You can now log in to your account.",
+                    icon: <CheckCircle2 className="text-green-500" />,
+                    duration: 3000,
+                });
+
                 navigate('/userLogin')
                 return true;
             }
 
             // Optional: show error if OTP failed
-            toast.error("Invalid OTP. Please try again.");
+            toast({
+                title: "Invalid OTP",
+                description: "Please try again with the correct code.",
+                variant: "destructive",
+                icon: <AlertCircle className="text-red-500" />,
+                duration: 3000,
+            });
+
 
             return false;
         } catch (error: any) {
             console.error(error);
-            toast.error("Something went wrong. Please try again.");
+            toast({
+                title: "Something went wrong. Please try again.",
+                variant: "destructive",
+                duration: 3000,
+            });
+
             return false;
         }
     };
 
 
     const handleResendOTP = async () => {
-        await new Promise((res) => setTimeout(res, 1000));
-        console.log("OTP resent");
+        if (!email) {
+            toast({
+                title: "Error",
+                description: "Email is missing.please Try singing up again",
+                variant: "destructive",
+            });
+            return;
+        }
+        try {
+            setIsLoading(true);
+            const response = await resendOtp.mutateAsync(email);
+            if (response?.message === "OTP sent") {
+                setShowOTPModal(true);
+                toast({
+                    title: "OTP Sent",
+                    description: "Check your email for the OTP.",
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to Resend OTP",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Inline styles matching login design

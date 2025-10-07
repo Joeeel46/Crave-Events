@@ -14,7 +14,14 @@ export interface ILoginData {
 	role: UserRoles;	
 }
 
+export interface LoginFormData {
+    email: string;
+    password: string;
+}
 
+export interface FormErrors {
+    [key: string]: string;
+}
 
 export interface User{
 	_id?:string

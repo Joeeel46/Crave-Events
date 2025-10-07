@@ -12,7 +12,7 @@ import { GenerateTokenUseCase } from "../../useCases/auth/generateTokenUseCase";
 import { ITokenService } from "../../domain/interface/services/ITokenService";
 import { JWTService } from "../../interfaceAdapters/services/jwtService";
 import { ILoginUserUseCase } from "../../domain/interface/useCase/auth/ILoginUserUseCase";
-import { LoginUserUseCase } from "../../useCases/auth/login-strategies/login-strategy.interface";
+import { LoginUserUseCase } from "../../useCases/auth/loginUserUseCase";
 import { IVerifyOtpUseCase } from "../../domain/interface/useCase/auth/IVerifyOtpUseCase";
 import { VerifyOtpUseCase } from "../../useCases/auth/register-strategies/VerifyOtpUseCase";
 import { IForgetPassUseCase } from "../../domain/interface/useCase/auth/IForgetPassUseCase";
@@ -23,6 +23,11 @@ import { ISendEmailUseCase } from "../../domain/interface/useCase/common/ISendEm
 import { SendEmailUseCase } from "../../useCases/common/sendEmailUseCase";
 import { IEmailService } from "../../domain/interface/services/IEmailService";
 import { EmailService } from "../../useCases/services/email.service";
+import { IRefreshTokenUseCase } from "../../domain/interface/useCase/auth/IRefreshTokenUseCase";
+import { RevokeRefreshTokenUseCase } from "../../useCases/auth/revoke-refresh-token.usecase";
+import { IRevokeRefreshTokenUseCase } from "../../domain/interface/useCase/auth/IRevokeRefreshTokenUseCase";
+import { IBlackListTokenUseCase } from "../../domain/interface/useCase/auth/IBlacklistTokenUseCase";
+import { BlackListTokenUseCase } from "../../useCases/auth/blacklist-token.usecase";
 
 
 export class UseCaseRegistry {
@@ -81,7 +86,15 @@ export class UseCaseRegistry {
     });
 
     container.register<IGoogleUseCase>("IGoogleUseCase", {
-      useClass: GoogleUseCase
+      useClass: GoogleUseCase,
+    })
+
+    container.register<IRevokeRefreshTokenUseCase>("IRevokeRefreshTokenUseCase", {
+      useClass: RevokeRefreshTokenUseCase
+    })
+
+    container.register<IBlackListTokenUseCase>("IBlackListTokenUseCase", {
+      useClass: BlackListTokenUseCase
     })
   }
 }

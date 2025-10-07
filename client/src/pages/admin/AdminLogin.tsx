@@ -1,29 +1,114 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Shield, Eye, EyeOff, Lock, User, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { z } from "zod";
+import { useAdminLoginMutation } from "@/hooks/adminCustomHooks";
+import type { ILoginData, FormErrors } from "@/types/User";
+import { setAdmin } from "@/store/slice/admin.slice";
+import { useAppDispatch } from "@/store/hooks";
+import type { Admin } from "@/store/slice/admin.slice";
 
 const AdminLogin = () => {
+  const dispatch = useAppDispatch()
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
-    rememberMe: false,
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const verifyLogin = useAdminLoginMutation();
+
+  const navigate = useNavigate();
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const formSchema = z.object({
+    email: z
+      .string()
+      .nonempty("Email is required")
+      .email("Invalid email format"),
+    password: z
+      .string()
+      .nonempty("Password is required")
+      .min(8, "Password must be at least 8 characters long"),
+  });
+
+  // Type inference (optional)
+  type FormData = z.infer<typeof formSchema>;
+
+  const validateForm = (formData: FormData): boolean => {
+    const result = formSchema.safeParse(formData);
+
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((err) => {
+        if (err.path.length > 0) {
+          newErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(newErrors);
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle admin login logic here
-    console.log("Admin login attempt:", formData);
-    // For now, redirect to dashboard (in real app, verify credentials first)
-    window.location.href = "/adminDashboard";
+
+    const isValid = validateForm(formData);
+    if (!isValid) return;
+
+    setIsLoading(true);
+
+    try {
+      const payload: ILoginData = {
+        email: formData.email,
+        password: formData.password,
+        role: "admin",
+      };
+
+      const response = await verifyLogin.mutateAsync(payload);
+      console.log(response);
+
+      if (response?.success) {
+
+        if (response.user) {
+          const AdminData: Admin = {
+            adminId: response.user.userId,  // map userId -> vendorId
+            name: response.user.name,
+            email: response.user.email,
+            role: response.user.role,
+            status: response.user.status,
+            isSuperAdmin:response.user.isSuperAdmin
+          };
+          dispatch(setAdmin(AdminData));
+          console.log('User data saved to Redux');
+        }
+
+        navigate("/adminDashboard");
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
+    } finally {
+      setIsLoading(false);
+    }
+
+    console.log("Login submitted:", formData);
   };
 
   return (
@@ -54,26 +139,28 @@ const AdminLogin = () => {
         {/* Login card */}
         <div className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username field */}
+            {/* Email field */}
             <div className="space-y-2">
-              <label htmlFor="username" className="block text-sm font-medium text-slate-300">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   className="block w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter your username"
-                  required
+                  placeholder="admin@example.com"
                 />
               </div>
+              {errors.email && (
+                <p className="text-xs text-red-400 mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Password field */}
@@ -93,7 +180,6 @@ const AdminLogin = () => {
                   onChange={handleInputChange}
                   className="block w-full pl-10 pr-12 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Enter your password"
-                  required
                 />
                 <button
                   type="button"
@@ -107,23 +193,13 @@ const AdminLogin = () => {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-xs text-red-400 mt-1">{errors.password}</p>
+              )}
             </div>
 
-            {/* Remember me checkbox */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="rememberMe"
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <label htmlFor="rememberMe" className="ml-2 block text-sm text-slate-300">
-                  Remember me
-                </label>
-              </div>
+            {/* Forgot password */}
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
@@ -135,10 +211,20 @@ const AdminLogin = () => {
             {/* Login button */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800 transform transition-all hover:scale-105 active:scale-95 shadow-lg"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800 transform transition-all hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <Zap className="w-5 h-5" />
-              Access Dashboard
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Accessing...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  Access Dashboard
+                </>
+              )}
             </button>
           </form>
 
@@ -164,7 +250,7 @@ const AdminLogin = () => {
 
         {/* Back to main site */}
         <div className="mt-4 text-center">
-          <Link 
+          <Link
             to="/"
             className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
           >

@@ -4,10 +4,10 @@ export interface IVendorData {
   idProof?: string;
   password: string;
   phone: string;  
-  role?: string;
+  role: 'vendor'
 }
 
-export interface SignupFormData {
+export interface IClientData {
   name:string
   email: string
   phoneNumber: string

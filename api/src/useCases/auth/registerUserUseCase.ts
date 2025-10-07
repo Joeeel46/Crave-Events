@@ -1,28 +1,16 @@
-import { inject,injectable } from "tsyringe";
-import { IRegisterStrategy } from "./register-strategies/register-strategy.interface";
+import { inject, injectable } from "tsyringe";
 import { IRegisterUseCase } from "../../domain/interface/useCase/auth/IRegisterUseCase";
 import { UserDTO } from "../../shared/dtos/user.dto";
-import { CustomError } from "../../domain/utils/custom.error"; 
-import { ERROR_MESSAGES,HTTP_STATUS } from "../../shared/constants";
-// import { IUserEntity } from "../../domain/entities/user.entity";
-
+import { IRegisterStrategy } from "./register-strategies/register-strategy.interface";
 
 @injectable()
-export class RegisterUseCase implements IRegisterUseCase{
-    private strategies:Record<string,IRegisterStrategy>;
-    constructor(
-        @inject("ClientRegisterStrategy")
-        private clientRegister:IRegisterStrategy
-    ){
-        this.strategies = {
-            client:this.clientRegister,
-        }
-    }
-    async execute(user: UserDTO): Promise<void> {
-        const strategy = this.strategies[user.role];
-        if(!strategy){
-            throw new CustomError(ERROR_MESSAGES.INVALID_ROLE,HTTP_STATUS.FORBIDDEN)
-        }
-        await strategy.register(user);
-    }
+export class RegisterUseCase implements IRegisterUseCase {
+  constructor(
+    @inject("ClientRegisterStrategy")
+    private _registerStrategy: IRegisterStrategy
+  ) {}
+
+  async execute(user: UserDTO): Promise<void> {
+    await this._registerStrategy.register(user);
+  }
 }

@@ -16,6 +16,10 @@ import { IVerifyOtpUseCase } from "../../../domain/interface/useCase/auth/IVerif
 import { forgotEmailValidationSchema } from "../validations/forgot-password";
 import { IForgetPassUseCase } from "../../../domain/interface/useCase/auth/IForgetPassUseCase";
 import { IGoogleUseCase } from "../../../domain/interface/useCase/auth/IGoogleAuthUseCase";
+import { IBlackListTokenUseCase } from "../../../domain/interface/useCase/auth/IBlacklistTokenUseCase";
+import { CustomRequest } from "../../middleware/auth.middleware";
+import { IRevokeRefreshTokenUseCase } from "../../../domain/interface/useCase/auth/IRevokeRefreshTokenUseCase";
+import { clearAuthCookies } from "../../../shared/utils/cookieHelper";
 
 
 @injectable()
@@ -40,10 +44,17 @@ export class AuthController implements IAuthController {
     private _verifyOtpUseCase: IVerifyOtpUseCase,
 
     @inject("IForgetPasswordUseCase")
-    private _forgetPassUseCase:IForgetPassUseCase,
+    private _forgetPassUseCase: IForgetPassUseCase,
 
     @inject("IGoogleUseCase")
-    private _googleUseCase: IGoogleUseCase
+    private _googleUseCase: IGoogleUseCase,
+
+    @inject("IBlackListTokenUseCase")
+    private _blackListTokenUseCase: IBlackListTokenUseCase,
+
+    @inject("IRevokeRefreshTokenUseCase")
+    private _revokeRefreshTokenUseCase: IRevokeRefreshTokenUseCase,
+
   ) { }
 
 
@@ -51,7 +62,7 @@ export class AuthController implements IAuthController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
-      console.log('body',req.body)
+      console.log('body', req.body)
       const { role } = req.body as { role: keyof typeof signupSchemas }
       const schema = signupSchemas[role];
       if (!schema) {
@@ -102,7 +113,7 @@ export class AuthController implements IAuthController {
   async verifyOtp(req: Request, res: Response): Promise<void> {
     try {
       const { email, otp } = req.body;
-      console.log(email,otp);
+      console.log(email, otp);
       const validatedDate = otpMailValidationSchema.parse({ email, otp });
       await this._verifyOtpUseCase.execute(validatedDate);
 
@@ -175,6 +186,32 @@ export class AuthController implements IAuthController {
       })
     } catch (error) {
       handleErrorResponse(res, error)
+    }
+  }
+
+  async logout(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("kjsd")
+      await this._blackListTokenUseCase.execute(
+        (req as CustomRequest).user.access_token
+      );
+      console.log('sdklfjklddd')
+      await this._revokeRefreshTokenUseCase.execute(
+        (req as CustomRequest).user.refresh_token
+      );
+
+      const user = (req as CustomRequest).user;
+      console.log(user)
+      const accessTokenName = `${user.role}_access_token`;
+      const refreshTokenName = `${user.role}_refresh_token`;
+      clearAuthCookies(res, accessTokenName, refreshTokenName);
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: SUCCESS_MESSAGES.LOGOUT_SUCCESS,
+      });
+    } catch (error) {
+      console.log("errrrrrr")
+      handleErrorResponse(res, error);
     }
   }
 

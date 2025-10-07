@@ -6,6 +6,9 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import { config } from "../../shared/config";
 import { AuthRoutes } from "../routes/auth/auth.route";
+import { ClientRoute } from "../routes/client/clientRoute";
+import { VendorRoute } from "../routes/vendor/VendorRoute";
+import { AdminRoute } from "../routes/admin/adminRoute";
 import { createServer, Server as HTTPServer } from "http";
 
 
@@ -45,6 +48,9 @@ export class Server {
 
   private configureRoutes(): void {
     this._app.use("/api/v_1/auth", new AuthRoutes().router);
+    this._app.use('/api/v_1/_cl', new ClientRoute().clientRoute)
+    this._app.use('/api/v_1/_ad', new AdminRoute().adminRoute)
+    this._app.use('/api/v_1/_ve', new VendorRoute().vendorRoute)
   }
 
   private configureErrorHandling(): void {

@@ -106,7 +106,7 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
         setIsResending(true);
         try {
             await onResendOTP();
-            setTimeLeft(30);
+            setTimeLeft(60);
             setIsExpired(false);
             setOtp(["", "", "", "", "", ""]);
             inputRefs.current[0]?.focus();

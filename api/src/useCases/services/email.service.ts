@@ -66,6 +66,4 @@ export class EmailService implements IEmailService{
 		};
 		await this._sendMail(mailOptions);
 	}
-
-
 }

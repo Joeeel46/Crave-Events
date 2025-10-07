@@ -67,6 +67,7 @@ export const SUCCESS_MESSAGES = {
 
 export const ERROR_MESSAGES = {
   WRONG_ID: "Invalid ID",
+  REJECTED: "Your account has been rejected. Please contact support.",
   TOKEN_EXPIRED: "Session expired login again",
   OTP_EXPIRED: "OTP has expired. Please request a new one.",
   TOKEN_BLACKLISTED: "Session is no longer valid",

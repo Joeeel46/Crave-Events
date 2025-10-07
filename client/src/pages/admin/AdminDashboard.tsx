@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { 
-  Users, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  Bell, 
+import {
+  Users,
+  Calendar,
+  BarChart3,
+  Settings,
+  Bell,
   Search,
   Plus,
   Filter,
@@ -19,10 +19,36 @@ import {
   X
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useNavigate } from "react-router-dom";
+import { useLogoutAdmin } from "@/hooks/adminCustomHooks";
+import { clearAdmin } from "@/store/slice/admin.slice";
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+
+  const { admin, isAuthenticated } = useAppSelector((state) => state.admin);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  // Using custom hook for logout
+  const { mutate: logout, isPending } = useLogoutAdmin();
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        dispatch(clearAdmin());
+        navigate("/adminLogin");
+        toast.success("Logged out successfully!");
+      },
+      onError: (error: any) => {
+        console.error("Logout failed:", error);
+        toast.error("Logout failed. Please try again.");
+      },
+    });
+  };
 
   const stats = [
     { title: "Total Users", value: "2,847", change: "+12%", icon: Users, color: "blue" },
@@ -71,7 +97,7 @@ const AdminDashboard = () => {
             <X className="w-6 h-6" />
           </button>
         </div>
-        
+
         {/* Sidebar Navigation */}
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
           <div className="space-y-1">
@@ -79,11 +105,10 @@ const AdminDashboard = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  activeTab === item.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
+                className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === item.id
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                  }`}
               >
                 <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
                 <span>{item.label}</span>
@@ -94,13 +119,34 @@ const AdminDashboard = () => {
 
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-700 flex-shrink-0">
-          <Link
-            to="/adminLogin"
-            className="w-full flex items-center px-3 py-3 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all duration-200"
-          >
-            <LogOut className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span>Logout</span>
-          </Link>
+          {isAuthenticated && admin ? (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-700 rounded-full">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {admin.name || admin.email.split('@')[0]}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                disabled={isPending}
+                className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                {isPending ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/adminLogin"
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span>Login</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -118,21 +164,8 @@ const AdminDashboard = () => {
               </button>
               <h1 className="text-xl font-semibold text-white capitalize truncate">{activeTab}</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4 flex-shrink-0">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-64 pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-              <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-800"></span>
-              </button>
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full shadow-lg"></div>
             </div>
           </div>
         </header>
@@ -153,18 +186,16 @@ const AdminDashboard = () => {
                           {stat.change} from last month
                         </p>
                       </div>
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ml-4 ${
-                        stat.color === 'blue' ? 'bg-blue-500/20' :
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ml-4 ${stat.color === 'blue' ? 'bg-blue-500/20' :
                         stat.color === 'green' ? 'bg-green-500/20' :
-                        stat.color === 'purple' ? 'bg-purple-500/20' :
-                        'bg-orange-500/20'
-                      }`}>
-                        <stat.icon className={`w-6 h-6 ${
-                          stat.color === 'blue' ? 'text-blue-400' :
+                          stat.color === 'purple' ? 'bg-purple-500/20' :
+                            'bg-orange-500/20'
+                        }`}>
+                        <stat.icon className={`w-6 h-6 ${stat.color === 'blue' ? 'text-blue-400' :
                           stat.color === 'green' ? 'text-green-400' :
-                          stat.color === 'purple' ? 'text-purple-400' :
-                          'text-orange-400'
-                        }`} />
+                            stat.color === 'purple' ? 'text-purple-400' :
+                              'text-orange-400'
+                          }`} />
                       </div>
                     </div>
                   </div>
@@ -196,9 +227,8 @@ const AdminDashboard = () => {
                               <p className="text-slate-400 text-sm truncate">{user.email}</p>
                             </div>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-3 ${
-                            user.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-3 ${user.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'
+                            }`}>
                             {user.status}
                           </span>
                         </div>
@@ -225,9 +255,8 @@ const AdminDashboard = () => {
                             <p className="text-white font-medium truncate">{service.title}</p>
                             <p className="text-slate-400 text-sm truncate">{service.client} • {service.date}</p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-3 ${
-                            service.status === 'Confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-3 ${service.status === 'Confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
+                            }`}>
                             {service.status}
                           </span>
                         </div>
@@ -281,9 +310,8 @@ const AdminDashboard = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              user.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'
+                              }`}>
                               {user.status}
                             </span>
                           </td>
@@ -341,9 +369,8 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-3 flex-shrink-0 ml-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            service.status === 'Confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${service.status === 'Confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
+                            }`}>
                             {service.status}
                           </span>
                           <div className="flex items-center space-x-2">
@@ -393,7 +420,7 @@ const AdminDashboard = () => {
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
