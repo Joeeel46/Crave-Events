@@ -1,4 +1,4 @@
-import { Verified } from "lucide-react";
+
 import { BASE_URL } from "./route";
 
 

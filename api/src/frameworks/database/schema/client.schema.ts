@@ -18,14 +18,15 @@ export const clientSchema = new Schema<IClientModel>({
   },
   phone: {
     type: String,
-    required: true
+    required: false
   },
   password: {
     type: String,
-    required: true
+    required: false
   },
   image: {
-    type: String
+    type: String,
+    required:false
   },
   role: {
     type: String,

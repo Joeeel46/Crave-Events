@@ -42,6 +42,7 @@ export class GoogleUseCase implements IGoogleUseCase {
 
         const payload = ticket.getPayload()
         if (!payload) {
+            console.error("No payload returned from Google token verification");
             throw new CustomError(
                 ERROR_MESSAGES.INVALID_TOKEN,
                 HTTP_STATUS.UNAUTHORIZED
@@ -91,13 +92,14 @@ export class GoogleUseCase implements IGoogleUseCase {
             name,
             role,
             email,
-            phone: "",
-            password: "",
+            phone: undefined,
+            password: undefined,
             googleId,
             profileImage,
             googleVerified: true
         }
 
+        console.log("Creating new client:", userData);
         const newUser = await this._registerUserUseCase.execute(
             userData
         )

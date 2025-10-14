@@ -52,11 +52,11 @@ export const useClientLoginMutation = () =>{
    })
 }
 
-// export const useClientGoogleLoginMutation = () =>{
-//   return useMutation({
-//     mutationFn: (loginData:loginData) => clientGoogleLogin(loginData)
-//   })
-// }
+export const useClientGoogleLoginMutation = () =>{
+  return useMutation({
+    mutationFn: (loginData:loginData) => clientGoogleLogin(loginData)
+  })
+}
 
 export const useClientForgotPasswordMutation = () => {
   return useMutation({
