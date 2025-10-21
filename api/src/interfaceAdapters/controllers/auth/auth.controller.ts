@@ -20,6 +20,7 @@ import { IBlackListTokenUseCase } from "../../../domain/interface/useCase/auth/I
 import { CustomRequest } from "../../middleware/auth.middleware";
 import { IRevokeRefreshTokenUseCase } from "../../../domain/interface/useCase/auth/IRevokeRefreshTokenUseCase";
 import { clearAuthCookies } from "../../../shared/utils/cookieHelper";
+import { IResetPasswordUseCase } from "../../../domain/interface/useCase/auth/IResetPasswordUseCase";
 
 
 @injectable()
@@ -54,6 +55,9 @@ export class AuthController implements IAuthController {
 
     @inject("IRevokeRefreshTokenUseCase")
     private _revokeRefreshTokenUseCase: IRevokeRefreshTokenUseCase,
+
+    @inject("IResetPasswordUseCase")
+    private _resetPasswordUseCase: IResetPasswordUseCase,
 
   ) { }
 
@@ -91,9 +95,9 @@ export class AuthController implements IAuthController {
     const { email } = req.body;
     console.log(email)
     try {
-      const userExists = await this._userExistenceService.emailExists(email);
-      console.log(userExists);
-      if (userExists) {
+      const { exists } = await this._userExistenceService.emailExists(email);
+      console.log(exists);
+      if (exists) {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           message: ERROR_MESSAGES.EMAIL_EXISTS,
         });
@@ -174,9 +178,9 @@ export class AuthController implements IAuthController {
 
   async forgetPassword(req: Request, res: Response): Promise<void> {
     try {
-      const values = req.body;
-
-      const validatedDate = forgotEmailValidationSchema.parse(values);
+      const { email, role } = req.body;
+      console.log("fogotpass body", req.body)
+      const validatedDate = forgotEmailValidationSchema.parse({ email, role });
       console.log("THis is validte Data", validatedDate)
       await this._forgetPassUseCase.execute(validatedDate.email, validatedDate.role);
 
@@ -248,6 +252,20 @@ export class AuthController implements IAuthController {
         success: true,
         message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
         user: user,
+      })
+    } catch (error) {
+      handleErrorResponse(res, error)
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { newPassword, token } = req.body
+
+      await this._resetPasswordUseCase.execute(token,newPassword);
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS
       })
     } catch (error) {
       handleErrorResponse(res, error)

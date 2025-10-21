@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { clientCreateAccount, clientResendOtp, clientForgotPassword, clientGoogleLogin, clientLogin, clientVerifyOtp, clientSignup, logoutClient } from '@/services/client/clientService';
+import { clientCreateAccount, clientResendOtp, clientResetPassword, clientForgotPassword, clientGoogleLogin, clientLogin, clientVerifyOtp, clientSignup, logoutClient } from '@/services/client/clientService';
 import type { ILoginData } from '@/types/User';
 import type { OtpFormData } from '@/types/signup';
 
@@ -60,11 +60,16 @@ export const useClientGoogleLoginMutation = () =>{
 
 export const useClientForgotPasswordMutation = () => {
   return useMutation({
-    mutationFn: (email:string) => clientForgotPassword(email)
+    mutationFn: (data: { email: string; role: 'client' | 'vendor' }) =>
+      clientForgotPassword(data)
   })
 }
 
-
+export const useClientResetPasswordMutation = () => {
+  return useMutation({
+    mutationFn: (data:{password:string,token:string}) => clientResetPassword(data.password,data.token)
+  })
+}
 
 export const useLogoutClient = () => {
   return useMutation({

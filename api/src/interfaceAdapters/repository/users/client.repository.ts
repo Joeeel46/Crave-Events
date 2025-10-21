@@ -25,5 +25,8 @@ export class ClientRepository extends BaseRepository<IClientModel> {
     await ClientModel.updateOne({ userId }, { $unset: { fcmToken: "" } });
   }
 
+  async findById(userId: string): Promise<IClientEntity | null> {
+    return await ClientModel.findById(userId);
+  }
 }
 

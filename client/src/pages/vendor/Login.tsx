@@ -464,8 +464,8 @@ const Login: React.FC = () => {
           {/* Forgot Password */}
           <div style={forgotPasswordStyle}>
             <button
+              onClick={() => navigate('/forgot-password/vendor', { state: { userType: 'vendor' } })}
               type="button"
-              onClick={() => toast.info("Password reset link sent to your email")}
               style={forgotPasswordLinkStyle}
               onMouseOver={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = "#eb5a82";

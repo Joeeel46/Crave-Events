@@ -9,4 +9,5 @@ export interface IVendorRepository extends IBaseRepository<IVendorEntity>{
    clearFcmToken(userId: string): Promise<void>;
    vendorSave(data:IVendorEntity):Promise<void>
    VendorfindOne(userId:string ):Promise<IVendorEntity | null>
+   findById(userId: string): Promise<IVendorEntity | null>;
 }

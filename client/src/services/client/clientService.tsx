@@ -18,7 +18,7 @@ interface SingupResponse {
 export const clientSignup = async (values: string): Promise<SingupResponse> => {
   try {
     console.log(values);
-    const response = await api.post(AUTH_ROUTES.SEND_OTP, {email:values})
+    const response = await api.post(AUTH_ROUTES.SEND_OTP, { email: values })
     return response.data
   } catch (error: any) {
     console.error('Signup failed', error)
@@ -104,12 +104,22 @@ export const clientGoogleLogin = async ({
 
 
 
-export const clientForgotPassword = async (email: string) => {
+export const clientForgotPassword = async (data: { email: string; role: 'client' | 'vendor' }) => {
   try {
-    const response = await api.post(AUTH_ROUTES.FORGOT_PASSWORD, { email })
+    const response = await api.post(AUTH_ROUTES.FORGOT_PASSWORD, data)
     return response.data
   } catch (error: any) {
-    throw error.response?.data || "Failed to Login User";
+    throw error.response?.data || "Failed to send reset password email";
+  }
+}
+
+export const clientResetPassword = async (password: string, token: string) => {
+  try {
+    const response = await api.post(AUTH_ROUTES.RESET_PASSWORD, { password, token })
+    return response.data
+  } catch (error: any) {
+    console.log('error while client reset password', error)
+    throw error.response?.data || 'error while reset password'
   }
 }
 

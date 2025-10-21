@@ -6,4 +6,5 @@ export interface IClientRepository extends IBaseRepository<IClientEntity>{
    findByEmail(email: string): Promise<IClientEntity|null>
    updateFcmToken(userId: string, token: string): Promise<void>;
    clearFcmToken(userId: string): Promise<void>;
+   findById(userId: string): Promise<IClientEntity | null>;
 }

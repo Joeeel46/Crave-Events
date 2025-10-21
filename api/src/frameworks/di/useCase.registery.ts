@@ -28,6 +28,8 @@ import { RevokeRefreshTokenUseCase } from "../../useCases/auth/revoke-refresh-to
 import { IRevokeRefreshTokenUseCase } from "../../domain/interface/useCase/auth/IRevokeRefreshTokenUseCase";
 import { IBlackListTokenUseCase } from "../../domain/interface/useCase/auth/IBlacklistTokenUseCase";
 import { BlackListTokenUseCase } from "../../useCases/auth/blacklist-token.usecase";
+import { IResetPasswordUseCase } from "../../domain/interface/useCase/auth/IResetPasswordUseCase";
+import { ResetPasswordUseCase } from "../../useCases/auth/reset-password.usecase";
 
 
 export class UseCaseRegistry {
@@ -95,6 +97,10 @@ export class UseCaseRegistry {
 
     container.register<IBlackListTokenUseCase>("IBlackListTokenUseCase", {
       useClass: BlackListTokenUseCase
+    })
+
+    container.register<IResetPasswordUseCase>("IResetPasswordUseCase", {
+      useClass: ResetPasswordUseCase
     })
   }
 }

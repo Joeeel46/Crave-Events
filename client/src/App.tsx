@@ -7,8 +7,10 @@ import AdminLogin from "./pages/admin/AdminLogin"
 import AdminDashboard from "./pages/admin/AdminDashboard"
 import VendorSignup from "./pages/vendor/Signup"
 import VendorLogin from "./pages/vendor/Login"
-import { Toaster }  from "sonner";
+import ForgotPasswordEmail from "./pages/common/forgotPassword"
+import { Toaster } from "sonner";
 import VendorHome from "./pages/vendorHome"
+import ResetPasswordPage from "./pages/common/resetPassword"
 
 function App() {
   return (
@@ -24,6 +26,9 @@ function App() {
           <Route path="/vendorSignup" element={<VendorSignup />} />
           <Route path="/vendorLogin" element={<VendorLogin />} />
           <Route path="/vendorHome" element={<VendorHome />} />
+          <Route path="/forgot-password/client" element={<ForgotPasswordEmail userType="client" />} />
+          <Route path="/forgot-password/vendor" element={<ForgotPasswordEmail userType="vendor" />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         </Routes>
       </BrowserRouter>
     </>

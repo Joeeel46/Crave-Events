@@ -120,7 +120,7 @@ const Login = () => {
 
 
     googleLoginMutation.mutate(
-      
+
       {
         credential: credentialResponse.credential,
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
@@ -412,6 +412,7 @@ const Login = () => {
 
         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
           <button
+            onClick={() => navigate('/forgot-password/client', { state: { userType: 'client' } })}
             style={{
               fontSize: '0.875rem',
               color: '#3b82f6',
